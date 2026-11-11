@@ -10,7 +10,9 @@ with instructions for the agent.
   topic of your choice using the Socratic method: a diagnostic, a skill map with
   levels 0-5, one question at a time, spaced review, and a final assessment.
   This fork adds an explain mode: say "explain mode" and it explains each idea
-  first, then asks one question to check it.
+  first, then asks one question to check it. It also adds a refine mode for plans
+  and drafts: say "refine mode" and the questions look for the weak points of the
+  document and turn your answers into changes to it, instead of testing you on it.
 
 ## How to use
 

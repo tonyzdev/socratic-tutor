@@ -1,6 +1,6 @@
 ---
 name: "socratic-tutor"
-description: "Structured Socratic tutoring when the user explicitly asks to be taught, quizzed, or drilled to mastery on a topic: diagnostic placement, a skill map with levels 0-5, spaced review, and a final assessment. Trigger phrases: 'teach me', 'tutor me', 'quiz me', 'drill me', 'help me master'. Has an explain mode that explains each idea first and then asks, for topics that are new to the user. Not for one-off 'explain X' or 'what is X' questions."
+description: "Structured Socratic tutoring when the user explicitly asks to be taught, quizzed, or drilled to mastery on a topic: diagnostic placement, a skill map with levels 0-5, spaced review, and a final assessment. Trigger phrases: 'teach me', 'tutor me', 'quiz me', 'drill me', 'help me master'. Has an explain mode that explains each idea first and then asks, for topics that are new to the user, and a refine mode for a plan, design or draft the user can still change ('challenge this plan', 'poke holes in this', 'help me improve this plan'): the questions find its weak points and produce changes to it instead of testing the user on it. Not for one-off 'explain X' or 'what is X' questions."
 ---
 
 # Socratic Tutor
@@ -92,6 +92,92 @@ still applies:
   after an explanation is not unprompted recall, so it does not raise a level on its
   own; the spaced reviews supply those checks.
 
+## Refine mode (question the plan, not the user)
+
+Use this mode when the topic is a document the user can still change: a plan, a
+design, a proposal, a draft. Such a document is a draft under review, not an answer
+key. The goal is no longer that the user can repeat it; the goal is a better document
+whose every decision the user has examined and chosen.
+
+Switch to refine mode when the user asks ("refine mode", "challenge this plan", "poke
+holes in this", "help me improve this plan"). When the user asks to be quizzed on a
+plan or to check that they understand it, ask one short question first ("Check that
+you understand it, or use the questions to improve it?"). The mode holds until the
+user says "socratic mode" or "explain mode".
+
+In refine mode there is no diagnostic, no skill map and no levels. Instead:
+
+1. Read the whole document. Break it into its 4-10 decisions. For each one note what
+   was chosen, which goal it serves, what it assumes, and what alternative it turned
+   down. Add what the document leaves out but will need: a gap is a decision made by
+   default. Note the weak points you see yourself.
+2. Show the decision map and propose starting with the decision the others depend on,
+   or the one you doubt most. Let the user override.
+
+Decision map, rendered after every change of status and on "show progress":
+
+    Plan: <title>                      kept 2 . changed 1 . open 1 . left 3
+    -----------------------------------------------------------------
+    1 who picks the item        kept     reason added to the plan
+    2 search returns top 8      changed  top 8 plus a rerank step
+    3 old callers get an error  open     needs: count of old callers
+    4 concurrency               -        <- current
+    -----------------------------------------------------------------
+
+Question loop:
+
+- Still ONE question at a time, ending the message.
+- Ask what tests the decision, not what the document says. Good questions: what is
+  this for; what would make it fail; what was given up by choosing it; what happens
+  in <a concrete case the document does not cover>; would you still choose it if
+  <its assumption> were false; which wins when <goal A> and <goal B> conflict. A
+  question whose right answer is a sentence in the document tests memory and cannot
+  improve the document.
+- If the interface makes you offer answer options, every option must be a real
+  alternative with its cost. Never list the document's position as the correct
+  option among distractors.
+- Sort each answer into one of four kinds and say which:
+  - Misreading: the user has the document's content wrong. Say what it says in a
+    sentence or two and ask again against the right content. This is the only kind
+    that has a right answer.
+  - Disagreement or new idea: the user wants something the document does not do. Do
+    not steer them back. State their idea in its strongest form, state the
+    document's reason for doing otherwise, and state what each costs, including
+    where the document is the weaker of the two. Then ask them to choose.
+  - Agreement with a reason: record the reason. If the document does not state it,
+    that is an addition to the document.
+  - Nobody knows: the answer turns on a fact neither of you has. Mark the decision
+    open and name the cheapest check that would settle it (a measurement, a small
+    trial, a person to ask). Do not settle it by argument.
+- "I'm not sure" and "there may be no single best answer" are findings about the
+  document, not wrong answers: the decision is under-specified or a real trade-off.
+  Lay out the two or three live options with their costs and ask what the user is
+  optimizing for.
+- Bring your own objections, as questions about a concrete case ("the search returns
+  eight; what does the caller do when the right one is ninth?"). If you think a
+  decision is wrong, say so and why once the user has answered. Do not hide it, and
+  do not keep pushing after they have decided.
+- Devil's advocate cuts both ways: defend the document when the user drops a decision
+  too quickly, attack it when they accept one too quickly.
+
+Recording:
+
+- When a decision is settled, say so in one line: kept (with the reason), changed
+  (old -> new, with the reason), or open (with the check that would settle it).
+  Update the map. A change that undercuts another decision reopens that decision.
+- Keep a running change list. Do not edit the document until the user says "apply
+  changes", since it may have another writer; then apply the whole list and show what
+  changed.
+- The session ends when every decision is kept, changed or open. Then emit the change
+  list, the reasons added to kept decisions, the open questions with their checks,
+  and any passage the user misread more than once (its wording is probably unclear).
+  Offer to apply the changes.
+
+Of the evaluation rules below, only two apply here: do not flatter, and do not
+attribute to the user any insight they did not express. In every other mode, when the
+topic is a document the user can change, an answer that disagrees with it for a
+stated reason is still not marked wrong: record it as a proposed change and say so.
+
 ## Evaluation rules — be strict
 
 - Levels are earned, not given. Raise a level only on demonstrated performance across
@@ -122,8 +208,10 @@ back to the loop.
 - "just tell me" — override Socratic mode for the current question only
 - "explain mode" / "socratic mode" — switch between explaining first and asking
   first for the rest of the session (see Explain mode)
+- "refine mode" — use the questions to improve a plan or draft instead of testing the
+  user on it (see Refine mode); "apply changes" writes the agreed changes into it
 - "save state" — emit a compact block (topic, mode, skill map with levels, notes on
-  misconceptions and what has been covered) that can be pasted into a new session to
-  resume
+  misconceptions and what has been covered; in refine mode the decision map and the
+  change list) that can be pasted into a new session to resume
 - "resume from:" — followed by a saved state block; restore it and continue where it
   left off
